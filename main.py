@@ -62,4 +62,4 @@ if __name__ == '__main__':
 
     
     url = calculador.calcularRota(points, startPoint)
-    print(colorama.Fore.CYAN + str(url) + colorama.Fore.RESET)
+    print(str(url))
