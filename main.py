@@ -1,52 +1,47 @@
-import math
-import random
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import main
+import colorama
 
-def calcular_distancia_geografica(lat1, lat2, lon1, lon2):
-
-    raio_terra_metros = 6371000
-
-    lat1 = math.radians(float(lat1))
-    lon1 = math.radians(float(lon1))
-    lat2 = math.radians(float(lat2))
-    lon2 = math.radians(float(lon2))
-
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    distancia = raio_terra_metros * c
-
-    return distancia
-
-
-def calcularRota(points, startPoint):
-
-    url = f'https://www.google.com/maps/dir'
-    for point, j in enumerate(points):
-        url = f'{url}/{points[point][0]},{points[point][1]}'
-
-    route = []
-    i = 0
-    while len(points) != 0:
-        route.append(startPoint)
-        smallDistance = 9999999999
-        for j, point in enumerate(points):
-            distance = calcular_distancia_geografica(startPoint[0], point[0], startPoint[1], point[1])
-            if distance < smallDistance:
-                smallDistance = distance
-                newPoint = j
-        
-        
-        startPoint = points[newPoint]
-        points.pop(newPoint)
-        i+=1
-
-    url = f'https://www.google.com/maps/dir'
-    for point, j in enumerate(route):
-        url = f'{url}/{route[point][0]},{route[point][1]}'
+def buscarCep(add):
+    options = webdriver.ChromeOptions()
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    options.add_argument('--headless')
+    navegador = webdriver.Chrome(options=options)
+    wait = WebDriverWait(navegador, 10)
+    navegador.get(f'https://www.google.com/maps/place/{add}')
+    time.sleep(5)
+    url = navegador.current_url
+    url = url.split('@')[1]
+    url = url.split(',')
     
-    return url
+    return (float(url[0]), float(url[1]))
 
+if __name__ == '__main__':
+    
+    repetir = True
+    i = 1
+    points = []
+
+    startPoint = input('Digite o ponto inicial: ')
+    startPoint = buscarCep(startPoint)
+
+    while repetir:
+        point = input(f"Qual o ponto {i}?\n")
+        point = buscarCep(point)
+        points.append(point)
+
+        continuar = input('Deseja inserir mais um ponto? [1] SIM [0] NÃO\n')
+        i = i + 1
+        if continuar == '0':
+            repetir = False
+        if continuar != '1':
+            while continuar != '1':
+                continuar = input('Deseja inserir mais um ponto? [1] SIM [0] NÃO\n')
+
+    
+    url = main.calcularRota(points, startPoint)
+    print(colorama.Fore.CYAN + str(url) + colorama.Fore.RESET)
